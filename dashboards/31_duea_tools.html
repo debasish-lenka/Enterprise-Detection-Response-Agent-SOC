@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUEA Tools Management — DBI SOC</title>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('soc_theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="soc-theme.css">
+  <style>
+    .tool-card {
+      position: relative;
+      transition: all 0.3s ease;
+    }
+    .tool-card:hover {
+      transform: translateY(-4px);
+    }
+    .tool-badge {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .badge-free {
+      background: rgba(34, 197, 94, 0.2);
+      border: 1px solid rgba(34, 197, 94, 0.4);
+      color: #22c55e;
+    }
+    .badge-paid {
+      background: rgba(168, 85, 247, 0.2);
+      border: 1px solid rgba(168, 85, 247, 0.4);
+      color: #a855f7;
+    }
+    .badge-coming {
+      background: rgba(248, 113, 113, 0.2);
+      border: 1px solid rgba(248, 113, 113, 0.4);
+      color: #f87171;
+    }
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    .tab-buttons {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .tab-btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      background: transparent;
+      color: #999;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .tab-btn:hover, .tab-btn.active {
+      background: rgba(16, 185, 129, 0.1);
+      border-color: rgba(16, 185, 129, 0.5);
+      color: #10b981;
+    }
+    .filter-info {
+      margin-top: 20px;
+      padding: 12px;
+      background: rgba(59, 130, 246, 0.05);
+      border-left: 3px solid rgba(59, 130, 246, 0.3);
+      border-radius: 4px;
+      font-size: 13px;
+      color: #999;
+    }
+    .deployment-btn {
+      padding: 8px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 4px;
+      color: #10b981;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .deployment-btn:hover {
+      background: rgba(16, 185, 129, 0.2);
+    }
+    .deployment-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .security-banner {
+      background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .security-banner h3 {
+      color: #3b82f6;
+      font-size: 14px;
+      margin-bottom: 8px;
+    }
+    .security-banner p {
+      font-size: 13px;
+      color: #999;
+      line-height: 1.5;
+    }
+    .tool-category {
+      font-size: 12px;
+      color: #64748b;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .tool-features {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 12px;
+    }
+    .feature {
+      color: #999;
+      display: flex;
+      gap: 6px;
+    }
+    .feature::before {
+      content: '✓';
+      color: #10b981;
+      flex-shrink: 0;
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 30px;
+    }
+    .stat-card {
+      background: rgba(16, 185, 129, 0.05);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #10b981;
+    }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <a href="index.html" class="brand-icon" style="text-decoration:none;font-size:15px;">🛡️</a>
+      <div class="brand-text">
+        <span class="brand-title">DBI SOC</span>
+        <span class="brand-sub">COMMAND CENTER</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Dashboards</div>
+      <div class="sidebar-group-label">Command & Analytics</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="01_soc_overview.html"><span class="nav-icon">📊</span><span>SOC Overview</span></a></li>
+        <li class="nav-item"><a href="31_duea_tools.html" class="active"><span class="nav-icon">🚀</span><span>DUEA Tools</span></a></li>
+        <li class="nav-item"><a href="05_ai_agents.html"><span class="nav-icon">🤖</span><span>AI Agents</span></a></li>
+      </ul>
+      <div class="sidebar-group-label">Network Security</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="15_pfsense_firewall.html"><span class="nav-icon">🔥</span><span>pfSense Firewall</span></a></li>
+        <li class="nav-item"><a href="04_suricata_ids.html"><span class="nav-icon">🚨</span><span>Suricata IDS</span></a></li>
+      </ul>
+      <div class="sidebar-group-label">Endpoint Security</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="13_wazuh_edr.html"><span class="nav-icon">🐺</span><span>Wazuh EDR</span></a></li>
+        <li class="nav-item"><a href="11_file_integrity.html"><span class="nav-icon">🗂️</span><span>File Integrity</span></a></li>
+      </ul>
+      <div class="sidebar-divider"></div>
+      <ul class="sidebar-nav">
+        <li class="nav-item danger"><a href="redteam-hub.html"><span class="nav-icon">🔴</span><span>Red Team Module</span></a></li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">DBI SOC · OSS</div>
+  </nav>
+
+  <main class="main">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h1>DUEA Tools Management</h1>
+      </div>
+      <div class="toolbar-right">
+        <button class="toolbar-btn" onclick="refreshTools()">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Security Alert -->
+      <div class="security-banner">
+        <h3>🔒 Security-First Architecture</h3>
+        <p>All API keys and credentials are encrypted end-to-end. No sensitive data is logged or stored in plain text. Code is open-source (AGPL-3.0) for full transparency and community auditing. All tools follow industry-standard security practices.</p>
+      </div>
+
+      <!-- Statistics -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Tools</div>
+          <div class="stat-value">20</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Free Tools</div>
+          <div class="stat-value">10</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Premium Tools</div>
+          <div class="stat-value">6</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Coming Soon</div>
+          <div class="stat-value">4</div>
+        </div>
+      </div>
+
+      <!-- Filter Tabs -->
+      <div class="tab-buttons">
+        <button class="tab-btn active" onclick="filterTools('all')">All Tools (20)</button>
+        <button class="tab-btn" onclick="filterTools('free')">✓ Free (10)</button>
+        <button class="tab-btn" onclick="filterTools('paid')">💰 Premium (6)</button>
+        <button class="tab-btn" onclick="filterTools('coming')">🔜 Coming Soon (4)</button>
+      </div>
+
+      <div class="filter-info" id="filterInfo" style="display:none;">
+        Showing <strong id="filterCount">0</strong> tools
+      </div>
+
+      <!-- Tools Grid -->
+      <div class="tool-grid" id="toolsGrid">
+        <!-- FREE TOOLS -->
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">📁</div>
+            <h3 style="margin-bottom: 4px;">File Integrity Monitor (FIM)</h3>
+            <div class="tool-category">File Security · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Real-time file system monitoring with change detection, integrity validation, and forensic analysis.</p>
+            <div class="tool-features">
+              <div class="feature">Shadow copy recovery</div>
+              <div class="feature">Content preview & diff</div>
+              <div class="feature">Secret redaction</div>
+              <div class="feature">Cross-platform (Win/Linux/Mac)</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('FIM')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🔍</div>
+            <h3 style="margin-bottom: 4px;">Osquery</h3>
+            <div class="tool-category">System Queries · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">SQL-based system query engine for real-time visibility into processes, network, and system state.</p>
+            <div class="tool-features">
+              <div class="feature">Process monitoring</div>
+              <div class="feature">Network connections</div>
+              <div class="feature">System configuration</div>
+              <div class="feature">Custom SQL queries</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('Osquery')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🎯</div>
+            <h3 style="margin-bottom: 4px;">Falco</h3>
+            <div class="tool-category">Behavioral Detection · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Kernel-level runtime security using eBPF for real-time behavioral anomaly detection.</p>
+            <div class="tool-features">
+              <div class="feature">eBPF-based detection</div>
+              <div class="feature">Syscall monitoring</div>
+              <div class="feature">Anomaly detection</div>
+              <div class="feature">Custom rules engine</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('Falco')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🧬</div>
+            <h3 style="margin-bottom: 4px;">YARA</h3>
+            <div class="tool-category">Malware Scanning · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Pattern matching engine for malware detection with customizable rules and threat intelligence.</p>
+            <div class="tool-features">
+              <div class="feature">Pattern matching</div>
+              <div class="feature">Malware detection</div>
+              <div class="feature">Custom YARA rules</div>
+              <div class="feature">Threat feeds integration</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('YARA')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🌍</div>
+            <h3 style="margin-bottom: 4px;">CrowdSec</h3>
+            <div class="tool-category">Threat Intelligence · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Community-driven threat intelligence with collaborative IP reputation and attack pattern sharing.</p>
+            <div class="tool-features">
+              <div class="feature">IP reputation</div>
+              <div class="feature">Attack pattern database</div>
+              <div class="feature">Community threat feeds</div>
+              <div class="feature">Automated blocking</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('CrowdSec')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🦠</div>
+            <h3 style="margin-bottom: 4px;">ClamAV</h3>
+            <div class="tool-category">Antivirus · Optional</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Open-source antivirus engine with virus signature database and file scanning capabilities.</p>
+            <div class="tool-features">
+              <div class="feature">Virus signatures</div>
+              <div class="feature">File scanning</div>
+              <div class="feature">Real-time monitoring</div>
+              <div class="feature">Auto-update definitions</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('ClamAV')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">📋</div>
+            <h3 style="margin-bottom: 4px;">auditd</h3>
+            <div class="tool-category">Audit Logging · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Linux kernel audit daemon for immutable event logging and compliance tracking.</p>
+            <div class="tool-features">
+              <div class="feature">Syscall auditing</div>
+              <div class="feature">File access tracking</div>
+              <div class="feature">Immutable logs</div>
+              <div class="feature">Compliance reporting</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('auditd')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🪟</div>
+            <h3 style="margin-bottom: 4px;">Sysmon</h3>
+            <div class="tool-category">Windows Monitoring · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Windows system monitoring tool for logging process creation, network connections, and registry changes.</p>
+            <div class="tool-features">
+              <div class="feature">Process tracking</div>
+              <div class="feature">Network monitoring</div>
+              <div class="feature">Registry monitoring</div>
+              <div class="feature">Event logging</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('Sysmon')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🌐</div>
+            <h3 style="margin-bottom: 4px;">Suricata</h3>
+            <div class="tool-category">Network Security · Optional</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Network intrusion detection and prevention system with advanced threat detection capabilities.</p>
+            <div class="tool-features">
+              <div class="feature">IDS/IPS</div>
+              <div class="feature">Protocol analysis</div>
+              <div class="feature">File extraction</div>
+              <div class="feature">Custom rules</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('Suricata')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="free">
+          <div class="tool-badge badge-free">✓ FREE</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🛡️</div>
+            <h3 style="margin-bottom: 4px;">EDR Lite (DUEA)</h3>
+            <div class="tool-category">Endpoint Detection · Core</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">DUEA's built-in lightweight EDR capability with behavioral analysis and threat detection.</p>
+            <div class="tool-features">
+              <div class="feature">Behavioral analysis</div>
+              <div class="feature">Threat scoring</div>
+              <div class="feature">Incident response</div>
+              <div class="feature">Automated remediation</div>
+            </div>
+            <button class="deployment-btn" onclick="deployTool('EDR Lite')">📦 Deploy</button>
+          </div>
+        </div>
+
+        <!-- PAID TOOLS -->
+        <div class="section-card tool-card" data-category="paid">
+          <div class="tool-badge badge-paid">💰 PAID</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">📊</div>
+            <h3 style="margin-bottom: 4px;">Wazuh Integration</h3>
+            <div class="tool-category">Premium Support · Enterprise</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Enterprise Wazuh agent integration with premium support, threat intelligence feeds, and managed services.</p>
+            <div class="tool-features">
+              <div class="feature">Premium support 24/7</div>
+              <div class="feature">Advanced threat feeds</div>
+              <div class="feature">Custom integrations</div>
+              <div class="feature">Managed deployment</div>
+            </div>
+            <button class="deployment-btn" disabled onclick="deployTool('Wazuh')">💰 License Required</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="paid">
+          <div class="tool-badge badge-paid">💰 PAID</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🔐</div>
+            <h3 style="margin-bottom: 4px;">Elastic Stack Enterprise</h3>
+            <div class="tool-category">Premium Analytics · Enterprise</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Enterprise Elasticsearch, Kibana, and Beats with commercial features and premium support.</p>
+            <div class="tool-features">
+              <div class="feature">Enterprise features</div>
+              <div class="feature">Advanced analytics</div>
+              <div class="feature">Premium support</div>
+              <div class="feature">Custom plugins</div>
+            </div>
+            <button class="deployment-btn" disabled onclick="deployTool('Elastic')">💰 License Required</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="paid">
+          <div class="tool-badge badge-paid">💰 PAID</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">📈</div>
+            <h3 style="margin-bottom: 4px;">Splunk Integration</h3>
+            <div class="tool-category">Premium Analytics · Enterprise</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Splunk Enterprise integration for log indexing, analysis, and threat hunting with enterprise features.</p>
+            <div class="tool-features">
+              <div class="feature">Log indexing</div>
+              <div class="feature">Threat hunting</div>
+              <div class="feature">Custom apps</div>
+              <div class="feature">Enterprise support</div>
+            </div>
+            <button class="deployment-btn" disabled onclick="deployTool('Splunk')">💰 License Required</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="paid">
+          <div class="tool-badge badge-paid">💰 PAID</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🎖️</div>
+            <h3 style="margin-bottom: 4px;">SentinelOne Integration</h3>
+            <div class="tool-category">Premium EDR · Enterprise</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">SentinelOne advanced endpoint protection with autonomous threat remediation and threat intelligence.</p>
+            <div class="tool-features">
+              <div class="feature">Autonomous remediation</div>
+              <div class="feature">Threat intelligence</div>
+              <div class="feature">Behavioral detection</div>
+              <div class="feature">Premium support</div>
+            </div>
+            <button class="deployment-btn" disabled onclick="deployTool('SentinelOne')">💰 License Required</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="paid">
+          <div class="tool-badge badge-paid">💰 PAID</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🪟</div>
+            <h3 style="margin-bottom: 4px;">Microsoft Defender Integration</h3>
+            <div class="tool-category">Premium Protection · Enterprise</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Integrated Microsoft Defender for Endpoint with advanced threat protection and cloud threat intelligence.</p>
+            <div class="tool-features">
+              <div class="feature">Advanced protection</div>
+              <div class="feature">Cloud intelligence</div>
+              <div class="feature">Threat & vuln management</div>
+              <div class="feature">Microsoft integration</div>
+            </div>
+            <button class="deployment-btn" disabled onclick="deployTool('Defender')">💰 License Required</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="paid">
+          <div class="tool-badge badge-paid">💰 PAID</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">⚡</div>
+            <h3 style="margin-bottom: 4px;">Rapid7 Integration</h3>
+            <div class="tool-category">Premium Vulnerability · Enterprise</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Rapid7 Nexpose/InsightVM integration for vulnerability management and attack surface analysis.</p>
+            <div class="tool-features">
+              <div class="feature">Vulnerability scanning</div>
+              <div class="feature">Risk scoring</div>
+              <div class="feature">Remediation tracking</div>
+              <div class="feature">Compliance reporting</div>
+            </div>
+            <button class="deployment-btn" disabled onclick="deployTool('Rapid7')">💰 License Required</button>
+          </div>
+        </div>
+
+        <!-- COMING SOON TOOLS -->
+        <div class="section-card tool-card" data-category="coming">
+          <div class="tool-badge badge-coming">🔜 COMING SOON</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🔧</div>
+            <h3 style="margin-bottom: 4px;">Gremlin Chaos Engineering</h3>
+            <div class="tool-category">Resilience Testing · Phase 4</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Chaos engineering integration for resilience testing and failure scenario validation (Phase 4).</p>
+            <div class="tool-features">
+              <div class="feature">Chaos scenarios</div>
+              <div class="feature">Resilience testing</div>
+              <div class="feature">Automated detection</div>
+              <div class="feature">Remediation testing</div>
+            </div>
+            <button class="deployment-btn" disabled>🔜 Phase 4 Release</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="coming">
+          <div class="tool-badge badge-coming">🔜 COMING SOON</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🔎</div>
+            <h3 style="margin-bottom: 4px;">Zeek Network Analysis</h3>
+            <div class="tool-category">Network Intelligence · Phase 3</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Network security monitoring with advanced protocol analysis and threat detection (Phase 3).</p>
+            <div class="tool-features">
+              <div class="feature">Protocol analysis</div>
+              <div class="feature">Network intelligence</div>
+              <div class="feature">Threat detection</div>
+              <div class="feature">Log generation</div>
+            </div>
+            <button class="deployment-btn" disabled>🔜 Phase 3 Release</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="coming">
+          <div class="tool-badge badge-coming">🔜 COMING SOON</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">📡</div>
+            <h3 style="margin-bottom: 4px;">VirusTotal Integration</h3>
+            <div class="tool-category">Threat Intelligence · Phase 3</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">File and URL analysis with VirusTotal threat intelligence feeds (Phase 3).</p>
+            <div class="tool-features">
+              <div class="feature">File analysis</div>
+              <div class="feature">URL checking</div>
+              <div class="feature">Threat intelligence</div>
+              <div class="feature">Multi-engine scanning</div>
+            </div>
+            <button class="deployment-btn" disabled>🔜 Phase 3 Release</button>
+          </div>
+        </div>
+
+        <div class="section-card tool-card" data-category="coming">
+          <div class="tool-badge badge-coming">🔜 COMING SOON</div>
+          <div style="padding-top: 20px;">
+            <div style="font-size: 28px; margin-bottom: 8px;">🌐</div>
+            <h3 style="margin-bottom: 4px;">MISP Integration</h3>
+            <div class="tool-category">Threat Intelligence · Phase 4</div>
+            <p style="font-size: 13px; color: #a1a5b0; margin: 12px 0;">Malware Information Sharing Platform integration for collaborative threat intelligence (Phase 4).</p>
+            <div class="tool-features">
+              <div class="feature">Threat sharing</div>
+              <div class="feature">IOC correlation</div>
+              <div class="feature">Community feeds</div>
+              <div class="feature">Automated correlation</div>
+            </div>
+            <button class="deployment-btn" disabled>🔜 Phase 4 Release</button>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+  function filterTools(category) {
+    const cards = document.querySelectorAll('.tool-card');
+    const filterInfo = document.getElementById('filterInfo');
+    let visibleCount = 0;
+
+    cards.forEach(card => {
+      if (category === 'all' || card.dataset.category === category) {
+        card.style.display = 'block';
+        visibleCount++;
+      } else {
+        card.style.display = 'none';
+      }
+    });
+
+    if (visibleCount < cards.length) {
+      filterInfo.style.display = 'block';
+      document.getElementById('filterCount').textContent = visibleCount;
+    } else {
+      filterInfo.style.display = 'none';
+    }
+
+    // Update active tab
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    event.target.classList.add('active');
+  }
+
+  function deployTool(toolName) {
+    alert(`🚀 Deployment initiated for: ${toolName}\n\nThis would open the DUEA Installer Factory with this tool pre-selected.`);
+  }
+
+  function refreshTools() {
+    console.log('Refreshing tool status...');
+    alert('🔄 Tools status refreshed');
+  }
+</script>
+
+</body>
+</html>
