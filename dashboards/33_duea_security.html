@@ -15,55 +15,16 @@
   <link rel="stylesheet" href="soc-theme.css">
   <script src="brand-config.js"></script>
   <style>
-    .security-item {
-      padding: 16px;
-      background: rgba(0,0,0,0.2);
-      border-radius: 6px;
-      border-left: 3px solid #10b981;
-      margin-bottom: 12px;
-    }
-    .security-status {
-      display: inline-block;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 700;
-      margin-top: 8px;
-    }
-    .status-secure { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-    .status-warning { background: rgba(248, 113, 113, 0.2); color: #f87171; }
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 16px;
-      margin-top: 20px;
-    }
-    .feature-box {
-      padding: 16px;
-      background: rgba(16, 185, 129, 0.05);
-      border: 1px solid rgba(16, 185, 129, 0.2);
-      border-radius: 6px;
-    }
-    .feature-box h3 {
-      margin-bottom: 8px;
-      color: #e4e4e7;
-      font-size: 14px;
-    }
-    .feature-box p {
-      font-size: 12px;
-      color: #999;
-      line-height: 1.5;
-    }
-    .code-block {
-      background: rgba(0,0,0,0.3);
-      border-radius: 4px;
-      padding: 12px;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      color: #22c55e;
-      margin: 12px 0;
-      overflow-x: auto;
-    }
+    .security-item { padding: var(--space-4); background: var(--bg-input); border-radius: var(--radius-sm); border-left: 3px solid var(--low); margin-bottom: var(--space-3); }
+    .security-row { display: flex; justify-content: space-between; align-items: flex-start; gap: var(--space-3); }
+    .security-desc { font-size: 12px; color: var(--text-secondary); margin-top: var(--space-2); line-height: 1.6; }
+    .code-block { background: rgba(0,0,0,0.3); border-radius: var(--radius-sm); padding: var(--space-3); font-family: var(--font-mono); font-size: 11.5px; color: var(--low); margin: var(--space-3) 0; overflow-x: auto; white-space: pre; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--space-3); margin-top: var(--space-3); }
+    .feature-box { padding: var(--space-4); background: var(--low-dim); border: 1px solid rgba(34,197,94,0.25); border-radius: var(--radius-sm); }
+    .feature-box h3 { margin-bottom: var(--space-2); color: var(--text-primary); font-size: 13px; }
+    .feature-box p { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .compliance-box { padding: var(--space-4); background: var(--bg-input); border-radius: var(--radius-sm); }
+    .compliance-label { font-size: 11px; color: var(--text-muted); margin-bottom: var(--space-2); }
   </style>
 </head>
 <body>
@@ -78,182 +39,155 @@
       </div>
     </div>
     <div class="sidebar-section">
-      <div class="sidebar-section-label">DUEA Management</div>
+      <div class="sidebar-section-label">Dashboards</div>
+      <div class="sidebar-group-label">Command & Analytics</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="01_soc_overview.html"><span class="nav-icon">📊</span><span>SOC Overview</span></a></li>
+        <li class="nav-item"><a href="05_ai_agents.html"><span class="nav-icon">🤖</span><span>AI Agents</span></a></li>
+      </ul>
+      <div class="sidebar-group-label">DUEA Management</div>
       <ul class="sidebar-nav">
         <li class="nav-item"><a href="31_duea_tools.html"><span class="nav-icon">🚀</span><span>Tools</span></a></li>
         <li class="nav-item"><a href="32_duea_deployment.html"><span class="nav-icon">📦</span><span>Deployments</span></a></li>
         <li class="nav-item"><a href="33_duea_security.html" class="active"><span class="nav-icon">🔒</span><span>Security</span></a></li>
       </ul>
+      <div class="sidebar-group-label">Endpoint Security</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="13_wazuh_edr.html"><span class="nav-icon">🐺</span><span>Wazuh EDR</span></a></li>
+        <li class="nav-item"><a href="11_file_integrity.html"><span class="nav-icon">🗂️</span><span>File Integrity</span></a></li>
+      </ul>
+      <div class="sidebar-divider"></div>
+      <ul class="sidebar-nav">
+        <li class="nav-item danger"><a href="redteam-hub.html"><span class="nav-icon">🔴</span><span>Red Team Module</span></a></li>
+      </ul>
     </div>
-    <div class="sidebar-footer">DBI SOC · DUEA</div>
+    <div class="sidebar-footer">DBI SOC · OSS</div>
   </nav>
 
-  <main class="main">
-    <div class="toolbar">
-      <div class="toolbar-left">
-        <h1>DUEA Security Configuration</h1>
+  <header class="topbar">
+    <div class="topbar-title"><span class="page-icon">🔒</span> DUEA Security</div>
+    <span class="topbar-meta">Encryption, signing &amp; audit posture</span>
+    <div class="topbar-right">
+      <a href="index.html" class="btn btn-ghost btn-sm">← Portal</a>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <div class="grid-3 mb-4">
+      <div class="kpi-card low">
+        <div class="kpi-label">Encryption</div>
+        <div class="kpi-value" style="font-size:20px;">ENABLED</div>
+        <div class="kpi-sub">TLS 1.3 · AES-256</div>
       </div>
-      <div class="toolbar-right">
-        <button class="toolbar-btn">🔄 Verify All</button>
+      <div class="kpi-card low">
+        <div class="kpi-label">Audit Logging</div>
+        <div class="kpi-value" style="font-size:20px;">ACTIVE</div>
+        <div class="kpi-sub">immutable · real-time</div>
+      </div>
+      <div class="kpi-card low">
+        <div class="kpi-label">Secret Redaction</div>
+        <div class="kpi-value" style="font-size:20px;">ENABLED</div>
+        <div class="kpi-sub">auto-scrub patterns</div>
       </div>
     </div>
 
-    <div class="content">
-      <!-- Security Status -->
-      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px;">
-        <div class="section-card" style="background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.2);">
-          <div style="font-size: 24px; margin-bottom: 8px;">✓</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">ENCRYPTION</div>
-          <div style="font-size: 28px; font-weight: 700; color: #22c55e;">ENABLED</div>
-          <div style="font-size: 11px; color: #999; margin-top: 8px;">TLS 1.3 • AES-256</div>
-        </div>
-        <div class="section-card" style="background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.2);">
-          <div style="font-size: 24px; margin-bottom: 8px;">✓</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">AUDIT LOGGING</div>
-          <div style="font-size: 28px; font-weight: 700; color: #22c55e;">ACTIVE</div>
-          <div style="font-size: 11px; color: #999; margin-top: 8px;">Immutable • Real-time</div>
-        </div>
-        <div class="section-card" style="background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.2);">
-          <div style="font-size: 24px; margin-bottom: 8px;">✓</div>
-          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">SECRET REDACTION</div>
-          <div style="font-size: 28px; font-weight: 700; color: #22c55e;">ENABLED</div>
-          <div style="font-size: 11px; color: #999; margin-top: 8px;">Auto-scrub • Patterns</div>
-        </div>
-      </div>
-
-      <!-- Core Security Features -->
-      <div class="section-card">
-        <h2 style="margin-bottom: 20px;">🔐 Core Security Features</h2>
+    <div class="card mb-4">
+      <div class="card-header"><span class="card-title">🔐 Core Security Features</span></div>
+      <div class="card-body">
 
         <div class="security-item">
-          <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div class="security-row">
             <div>
               <strong>mTLS with Certificate Pinning</strong>
-              <div style="font-size: 12px; color: #999; margin-top: 4px;">Mutual TLS authentication with pinned certificates</div>
+              <div class="security-desc">Mutual TLS authentication with pinned certificates</div>
             </div>
-            <div class="security-status status-secure">✓ CONFIGURED</div>
+            <span class="badge badge-low">✓ Configured</span>
           </div>
-          <div class="code-block">
-# mTLS Configuration
-transport {
+          <div class="code-block">transport {
   type = "mtls"
   tls_version = "1.3"
   cipher_suites = ["TLS_AES_256_GCM_SHA384"]
   cert_pinning = true
-}
-          </div>
+}</div>
         </div>
 
         <div class="security-item">
-          <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div class="security-row">
             <div>
               <strong>Policy Signing with Ed25519</strong>
-              <div style="font-size: 12px; color: #999; margin-top: 4px;">Only signed policies are executed by agents</div>
+              <div class="security-desc">Only signed policies are executed by agents</div>
             </div>
-            <div class="security-status status-secure">✓ ENFORCED</div>
+            <span class="badge badge-low">✓ Enforced</span>
           </div>
-          <div style="font-size: 12px; color: #999; margin-top: 12px;">
-            All policies are cryptographically signed using Ed25519 keys. Unsigned policies are rejected by agents. Policy signatures verified before execution.
-          </div>
+          <div class="security-desc">All policies are cryptographically signed using Ed25519 keys. Unsigned policies are rejected by agents; signatures are verified before execution.</div>
         </div>
 
         <div class="security-item">
-          <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div class="security-row">
             <div>
               <strong>Secret Redaction in Logs</strong>
-              <div style="font-size: 12px; color: #999; margin-top: 4px;">Automatic scrubbing of passwords and API keys</div>
+              <div class="security-desc">Automatic scrubbing of passwords and API keys</div>
             </div>
-            <div class="security-status status-secure">✓ ACTIVE</div>
+            <span class="badge badge-low">✓ Active</span>
           </div>
-          <div class="code-block">
-# Patterns detected and redacted:
-- API Keys: /[\w-]{32,}/g
-- Passwords: /password.*[:=]\s*"?[^"\s]+/i
-- Tokens: /token.*[:=]\s*"?[^"\s]+/i
-- Database URLs: /connection_string=.*/i
-          </div>
+          <div class="code-block"># Patterns detected and redacted
+API Keys:       /[\w-]{32,}/g
+Passwords:      /password.*[:=]\s*"?[^"\s]+/i
+Tokens:         /token.*[:=]\s*"?[^"\s]+/i
+Database URLs:  /connection_string=.*/i</div>
         </div>
 
         <div class="security-item">
-          <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div class="security-row">
             <div>
               <strong>Immutable Audit Logging</strong>
-              <div style="font-size: 12px; color: #999; margin-top: 4px;">Tamper-evident event logging</div>
+              <div class="security-desc">Tamper-evident event logging</div>
             </div>
-            <div class="security-status status-secure">✓ RECORDING</div>
+            <span class="badge badge-low">✓ Recording</span>
           </div>
-          <div style="font-size: 12px; color: #999; margin-top: 12px;">
-            All events are logged with cryptographic hashes for tamper detection. Logs are immutable and cannot be modified after creation. BLAKE3 hashing for integrity verification.
-          </div>
+          <div class="security-desc">All events are logged with cryptographic hashes for tamper detection. Logs are immutable after creation; BLAKE3 hashing verifies integrity.</div>
         </div>
 
         <div class="security-item">
-          <div style="display:flex; justify-content:space-between; align-items:start;">
+          <div class="security-row">
             <div>
               <strong>Code Signing on Releases</strong>
-              <div style="font-size: 12px; color: #999; margin-top: 4px;">All releases are GPG signed</div>
+              <div class="security-desc">All releases are GPG signed</div>
             </div>
-            <div class="security-status status-secure">✓ ENABLED</div>
+            <span class="badge badge-low">✓ Enabled</span>
           </div>
-          <div style="font-size: 12px; color: #999; margin-top: 12px;">
-            All DUEA releases are cryptographically signed with GPG keys. Release signatures can be verified using public key: <strong>keys.openpgp.org</strong>
-          </div>
+          <div class="security-desc">Every DUEA release is cryptographically signed with GPG keys. Release signatures can be verified using the published public key.</div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="card mb-4">
+      <div class="card-header"><span class="card-title">🛡️ Security Guarantees</span></div>
+      <div class="card-body">
+        <div class="features-grid">
+          <div class="feature-box"><h3>🔑 End-to-End Encryption</h3><p>All communication between agents and manager is encrypted using TLS 1.3 with AES-256.</p></div>
+          <div class="feature-box"><h3>🛡️ No Data Leakage</h3><p>Sensitive data is never logged in plain text. Credentials are encrypted in transit and at rest.</p></div>
+          <div class="feature-box"><h3>📝 Immutable Logs</h3><p>Cryptographic hashes prevent log tampering. Every event is timestamped and verified.</p></div>
+          <div class="feature-box"><h3>🔐 Code Transparency</h3><p>100% open-source (AGPL-3.0) for full code auditability by the community.</p></div>
+          <div class="feature-box"><h3>✓ Policy Signing</h3><p>Only digitally signed policies execute — protects against policy injection attacks.</p></div>
+          <div class="feature-box"><h3>⚠️ Secret Redaction</h3><p>Automatic detection and scrubbing of passwords, API keys, and tokens from logs.</p></div>
         </div>
       </div>
+    </div>
 
-      <!-- Security Features Grid -->
-      <div class="features-grid">
-        <div class="feature-box">
-          <h3>🔑 End-to-End Encryption</h3>
-          <p>All communication between agents and manager is encrypted using TLS 1.3 with AES-256 encryption.</p>
+    <div class="card mb-4">
+      <div class="card-header"><span class="card-title">📋 Compliance &amp; Auditing</span></div>
+      <div class="card-body">
+        <div class="grid-3 mb-4">
+          <div class="compliance-box"><div class="compliance-label">✓ GDPR Compliance</div><strong>Data Handling</strong><div class="security-desc">PII redaction, audit trails, retention policies</div></div>
+          <div class="compliance-box"><div class="compliance-label">✓ SOC 2 Ready</div><strong>Access Control</strong><div class="security-desc">Role-based access, logging, monitoring</div></div>
+          <div class="compliance-box"><div class="compliance-label">✓ CIS Controls</div><strong>Security Baselines</strong><div class="security-desc">Asset inventory, vulnerability management</div></div>
         </div>
-        <div class="feature-box">
-          <h3>🛡️ No Data Leakage</h3>
-          <p>Sensitive data is never logged in plain text. All credentials are encrypted in transit and at rest.</p>
-        </div>
-        <div class="feature-box">
-          <h3>📝 Immutable Logs</h3>
-          <p>Cryptographic hashes prevent log tampering. All events are timestamped and verified.</p>
-        </div>
-        <div class="feature-box">
-          <h3>🔐 Code Transparency</h3>
-          <p>100% open-source (AGPL-3.0). Full code auditability for security researchers and community.</p>
-        </div>
-        <div class="feature-box">
-          <h3>✓ Policy Signing</h3>
-          <p>Only digitally signed policies execute. Protects against policy injection attacks.</p>
-        </div>
-        <div class="feature-box">
-          <h3>⚠️ Secret Redaction</h3>
-          <p>Automatic detection and scrubbing of passwords, API keys, and tokens from logs.</p>
-        </div>
-      </div>
-
-      <!-- Compliance & Auditing -->
-      <div class="section-card" style="margin-top: 30px;">
-        <h2 style="margin-bottom: 20px;">📋 Compliance & Auditing</h2>
-
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 20px;">
-          <div style="padding: 16px; background: rgba(0,0,0,0.2); border-radius: 6px;">
-            <div style="font-size: 12px; color: #999; margin-bottom: 8px;">✓ GDPR Compliance</div>
-            <div style="font-size: 14px; color: #e4e4e7; font-weight: 600;">Data Handling</div>
-            <div style="font-size: 12px; color: #999; margin-top: 8px;">PII redaction, audit trails, retention policies</div>
-          </div>
-          <div style="padding: 16px; background: rgba(0,0,0,0.2); border-radius: 6px;">
-            <div style="font-size: 12px; color: #999; margin-bottom: 8px;">✓ SOC 2 Ready</div>
-            <div style="font-size: 14px; color: #e4e4e7; font-weight: 600;">Access Control</div>
-            <div style="font-size: 12px; color: #999; margin-top: 8px;">Role-based access, logging, monitoring</div>
-          </div>
-          <div style="padding: 16px; background: rgba(0,0,0,0.2); border-radius: 6px;">
-            <div style="font-size: 12px; color: #999; margin-bottom: 8px;">✓ CIS Controls</div>
-            <div style="font-size: 14px; color: #e4e4e7; font-weight: 600;">Security Baselines</div>
-            <div style="font-size: 12px; color: #999; margin-top: 8px;">Asset inventory, vulnerability management</div>
-          </div>
-        </div>
-
-        <div style="padding: 16px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 6px;">
+        <div class="security-item">
           <strong>Audit Logging Details</strong>
-          <div style="font-size: 12px; color: #999; margin-top: 12px; line-height: 1.6;">
+          <div class="security-desc">
             • All agent connections logged with timestamp and certificate fingerprint<br>
             • Policy changes tracked with before/after hash comparison<br>
             • All security events logged: authentication, authorization, data access<br>
@@ -262,47 +196,31 @@ transport {
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- Threat Model -->
-      <div class="section-card" style="margin-top: 30px;">
-        <h2 style="margin-bottom: 20px;">🎯 Threat Model & Mitigations</h2>
-
+    <div class="card">
+      <div class="card-header"><span class="card-title">🎯 Threat Model &amp; Mitigations</span></div>
+      <div class="card-body">
         <div class="security-item">
           <strong>Agent Compromise</strong>
-          <p style="font-size: 12px; color: #999; margin: 8px 0;">
-            <strong>Threat:</strong> Attacker gains access to agent and modifies local configuration<br>
-            <strong>Mitigation:</strong> Code signing + immutable audit logs + tamper detection
-          </p>
+          <div class="security-desc"><strong>Threat:</strong> Attacker gains access to agent and modifies local configuration.<br><strong>Mitigation:</strong> Code signing + immutable audit logs + tamper detection.</div>
         </div>
-
         <div class="security-item">
           <strong>Man-in-the-Middle (MITM)</strong>
-          <p style="font-size: 12px; color: #999; margin: 8px 0;">
-            <strong>Threat:</strong> Attacker intercepts communication between agent and manager<br>
-            <strong>Mitigation:</strong> mTLS with certificate pinning + TLS 1.3 + AES-256 encryption
-          </p>
+          <div class="security-desc"><strong>Threat:</strong> Attacker intercepts communication between agent and manager.<br><strong>Mitigation:</strong> mTLS with certificate pinning + TLS 1.3 + AES-256 encryption.</div>
         </div>
-
         <div class="security-item">
           <strong>Policy Injection</strong>
-          <p style="font-size: 12px; color: #999; margin: 8px 0;">
-            <strong>Threat:</strong> Attacker injects malicious policies to agents<br>
-            <strong>Mitigation:</strong> Ed25519 digital signature verification before execution
-          </p>
+          <div class="security-desc"><strong>Threat:</strong> Attacker injects malicious policies into agents.<br><strong>Mitigation:</strong> Ed25519 digital signature verification before execution.</div>
         </div>
-
         <div class="security-item">
           <strong>Lateral Movement</strong>
-          <p style="font-size: 12px; color: #999; margin: 8px 0;">
-            <strong>Threat:</strong> Compromised endpoint becomes pivot point for network attack<br>
-            <strong>Mitigation:</strong> Privilege isolation + capability-based execution + network segmentation
-          </p>
+          <div class="security-desc"><strong>Threat:</strong> Compromised endpoint becomes a pivot point for network attacks.<br><strong>Mitigation:</strong> Privilege isolation + capability-based execution + network segmentation.</div>
         </div>
       </div>
-
     </div>
-  </main>
 
+  </main>
 </div>
 
 </body>
