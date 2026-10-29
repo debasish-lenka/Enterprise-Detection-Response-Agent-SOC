@@ -63,5 +63,3 @@ config/dfir-iris/certificates/
 
 # Local-only test scripts/checklists - never pushed
 testing/
-
-Enterprise-Detection-SOC/
