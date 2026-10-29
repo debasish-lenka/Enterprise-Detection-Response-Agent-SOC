@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branding Settings — DBI SOC</title>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('soc_theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="soc-theme.css">
+  <style>
+    .form-group { margin-bottom: var(--space-4); }
+    .form-label { font-size: 12.5px; font-weight: 600; color: var(--text-primary); margin-bottom: var(--space-2); display: block; }
+    .form-hint { font-size: 11.5px; color: var(--text-muted); margin-top: 4px; }
+    .form-input {
+      width: 100%; padding: 9px 12px; background: var(--bg-input);
+      border: 1px solid var(--border); border-radius: var(--radius-sm);
+      color: var(--text-primary); font-size: 13px; transition: border-color 150ms ease;
+    }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .radio-row { display: flex; gap: var(--space-4); margin-bottom: var(--space-3); }
+    .radio-option { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+    .radio-option input { accent-color: var(--accent); cursor: pointer; }
+    .logo-mode-panel { display: none; }
+    .logo-mode-panel.active { display: block; }
+    .preview-sidebar {
+      width: 220px; background: var(--bg-surface); border: 1px solid var(--border);
+      border-radius: var(--radius-md); overflow: hidden;
+    }
+    .preview-footer-note { font-size: 11px; color: var(--text-muted); margin-top: var(--space-2); }
+    .btn-row { display: flex; gap: var(--space-3); margin-top: var(--space-5); }
+    .toast {
+      position: fixed; bottom: 24px; right: 24px; background: var(--low-dim);
+      border: 1px solid rgba(34,197,94,0.4); color: var(--low); padding: 10px 16px;
+      border-radius: var(--radius-sm); font-size: 13px; font-weight: 600;
+      opacity: 0; transform: translateY(10px); transition: all 200ms ease; pointer-events: none;
+      z-index: 999;
+    }
+    .toast.show { opacity: 1; transform: translateY(0); }
+    .file-drop {
+      border: 1px dashed var(--border-light); border-radius: var(--radius-sm);
+      padding: var(--space-4); text-align: center; font-size: 12.5px; color: var(--text-muted);
+    }
+    .admin-note {
+      background: var(--accent-dim); border: 1px solid rgba(59,130,246,0.3);
+      border-radius: var(--radius-md); padding: var(--space-4); margin-bottom: var(--space-4);
+      font-size: 12.5px; color: var(--text-secondary); line-height: 1.6;
+    }
+    .admin-note strong { color: var(--text-accent); }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <a href="index.html" class="brand-icon" style="text-decoration:none;font-size:15px;">🛡️</a>
+      <div class="brand-text">
+        <span class="brand-title">DBI SOC</span>
+        <span class="brand-sub">COMMAND CENTER</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Dashboards</div>
+      <div class="sidebar-group-label">Command & Analytics</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="01_soc_overview.html"><span class="nav-icon">📊</span><span>SOC Overview</span></a></li>
+      </ul>
+      <div class="sidebar-group-label">DUEA Management</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="31_duea_tools.html"><span class="nav-icon">🚀</span><span>Tools</span></a></li>
+        <li class="nav-item"><a href="32_duea_deployment.html"><span class="nav-icon">📦</span><span>Deployments</span></a></li>
+        <li class="nav-item"><a href="33_duea_security.html"><span class="nav-icon">🔒</span><span>Security</span></a></li>
+      </ul>
+      <div class="sidebar-group-label">Administration</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="00_admin_branding.html" class="active"><span class="nav-icon">⚙️</span><span>Branding Settings</span></a></li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">DBI SOC · OSS</div>
+  </nav>
+
+  <header class="topbar">
+    <div class="topbar-title"><span class="page-icon">⚙️</span> Branding Settings</div>
+    <span class="topbar-meta">Admin-only · applies instantly to all dashboards</span>
+    <div class="topbar-right">
+      <a href="index.html" class="btn btn-ghost btn-sm">← Portal</a>
+    </div>
+  </header>
+
+  <main class="main-content">
+
+    <div class="admin-note">
+      🔐 <strong>Admin control:</strong> Organization name, tagline and logo shown in every dashboard's sidebar are no longer hardcoded. Change them here once and they apply instantly across all 30+ dashboards (stored locally per browser/device, same mechanism as the dark/light theme toggle).
+    </div>
+
+    <div class="grid-1-2">
+      <!-- Live Preview -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">👁️ Live Preview</span></div>
+        <div class="card-body">
+          <div class="preview-sidebar">
+            <div class="sidebar-brand">
+              <span id="previewIcon" class="brand-icon" style="font-size:15px;">🛡️</span>
+              <div class="brand-text">
+                <span id="previewTitle" class="brand-title">DBI SOC</span>
+                <span id="previewSub" class="brand-sub">COMMAND CENTER</span>
+              </div>
+            </div>
+          </div>
+          <div class="preview-footer-note">This is exactly how the sidebar header will look on every dashboard page.</div>
+        </div>
+      </div>
+
+      <!-- Settings Form -->
+      <div class="card">
+        <div class="card-header"><span class="card-title">🏷️ Organization Branding</span></div>
+        <div class="card-body">
+
+          <div class="form-group">
+            <label class="form-label">Organization Name</label>
+            <input type="text" id="inputTitle" class="form-input" placeholder="e.g., DBI SOC" maxlength="40">
+            <div class="form-hint">Shown as the main title in the sidebar (replaces "DBI SOC").</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Sub-title / Tagline</label>
+            <input type="text" id="inputSub" class="form-input" placeholder="e.g., COMMAND CENTER" maxlength="40">
+            <div class="form-hint">Small caption under the organization name.</div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Logo</label>
+            <div class="radio-row">
+              <label class="radio-option"><input type="radio" name="logoMode" value="icon" checked> Emoji / Text Icon</label>
+              <label class="radio-option"><input type="radio" name="logoMode" value="image"> Image (upload or URL)</label>
+            </div>
+
+            <div id="iconPanel" class="logo-mode-panel active">
+              <input type="text" id="inputIcon" class="form-input" placeholder="🛡️" maxlength="4" style="width:100px;">
+              <div class="form-hint">Paste any emoji or 1-2 letter abbreviation.</div>
+            </div>
+
+            <div id="imagePanel" class="logo-mode-panel">
+              <div class="file-drop" style="margin-bottom:10px;">
+                <input type="file" id="inputFile" accept="image/*" style="width:100%;">
+                <div class="form-hint">Recommended: square PNG/SVG, under 200 KB.</div>
+              </div>
+              <input type="text" id="inputLogoUrl" class="form-input" placeholder="…or paste an image URL">
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn btn-primary" id="saveBtn">💾 Save &amp; Apply</button>
+            <button class="btn btn-ghost" id="resetBtn">↺ Reset to Defaults</button>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div class="toast" id="toast">✓ Branding updated across all dashboards</div>
+
+<script src="brand-config.js"></script>
+<script>
+  var cfg = window.SOC_BRAND.load();
+
+  var elTitle = document.getElementById('inputTitle');
+  var elSub = document.getElementById('inputSub');
+  var elIcon = document.getElementById('inputIcon');
+  var elLogoUrl = document.getElementById('inputLogoUrl');
+  var elFile = document.getElementById('inputFile');
+  var previewIcon = document.getElementById('previewIcon');
+  var previewTitle = document.getElementById('previewTitle');
+  var previewSub = document.getElementById('previewSub');
+  var toast = document.getElementById('toast');
+
+  var pendingLogoDataUrl = '';
+
+  function hydrateForm(c) {
+    elTitle.value = c.title;
+    elSub.value = c.sub;
+    elIcon.value = c.icon;
+    elLogoUrl.value = c.logoUrl || '';
+    var mode = c.logoUrl ? 'image' : 'icon';
+    document.querySelector('input[name="logoMode"][value="' + mode + '"]').checked = true;
+    togglePanels(mode);
+    renderPreview(c);
+  }
+
+  function togglePanels(mode) {
+    document.getElementById('iconPanel').classList.toggle('active', mode === 'icon');
+    document.getElementById('imagePanel').classList.toggle('active', mode === 'image');
+  }
+
+  function currentDraft() {
+    var mode = document.querySelector('input[name="logoMode"]:checked').value;
+    var logoUrl = '';
+    if (mode === 'image') {
+      logoUrl = elLogoUrl.value.trim() || pendingLogoDataUrl;
+    }
+    return {
+      title: elTitle.value.trim() || window.SOC_BRAND.DEFAULTS.title,
+      sub: elSub.value.trim() || window.SOC_BRAND.DEFAULTS.sub,
+      icon: elIcon.value.trim() || window.SOC_BRAND.DEFAULTS.icon,
+      logoUrl: logoUrl
+    };
+  }
+
+  function renderPreview(c) {
+    previewTitle.textContent = c.title;
+    previewSub.textContent = c.sub;
+    if (c.logoUrl) {
+      previewIcon.innerHTML = '<img src="' + c.logoUrl + '" alt="logo" style="width:26px;height:26px;object-fit:contain;border-radius:6px;display:block;">';
+    } else {
+      previewIcon.innerHTML = '';
+      previewIcon.textContent = c.icon;
+    }
+  }
+
+  ['input'].forEach(function (evt) {
+    [elTitle, elSub, elIcon, elLogoUrl].forEach(function (el) {
+      el.addEventListener(evt, function () { renderPreview(currentDraft()); });
+    });
+  });
+
+  document.querySelectorAll('input[name="logoMode"]').forEach(function (radio) {
+    radio.addEventListener('change', function () {
+      togglePanels(this.value);
+      renderPreview(currentDraft());
+    });
+  });
+
+  elFile.addEventListener('change', function () {
+    var file = this.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function (e) {
+      pendingLogoDataUrl = e.target.result;
+      elLogoUrl.value = '';
+      renderPreview(currentDraft());
+    };
+    reader.readAsDataURL(file);
+  });
+
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    setTimeout(function () { toast.classList.remove('show'); }, 2200);
+  }
+
+  document.getElementById('saveBtn').addEventListener('click', function () {
+    var draft = currentDraft();
+    window.SOC_BRAND.save(draft);
+    showToast('✓ Branding updated across all dashboards');
+  });
+
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    var defaults = window.SOC_BRAND.reset();
+    pendingLogoDataUrl = '';
+    hydrateForm(defaults);
+    showToast('↺ Reset to default branding');
+  });
+
+  hydrateForm(cfg);
+</script>
+
+</body>
+</html>

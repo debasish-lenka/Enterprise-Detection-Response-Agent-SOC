@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DUEA Deployments — DBI SOC</title>
+  <script>
+    (function () {
+      try {
+        var saved = localStorage.getItem('soc_theme');
+        if (saved === 'light') document.documentElement.setAttribute('data-theme', 'light');
+      } catch (e) {}
+    })();
+  </script>
+  <link rel="stylesheet" href="soc-theme.css">
+  <script src="brand-config.js"></script>
+  <style>
+    .deployment-item {
+      padding: 16px;
+      background: rgba(0,0,0,0.2);
+      border-radius: 6px;
+      border-left: 3px solid #10b981;
+      margin-bottom: 12px;
+    }
+    .deployment-status {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 700;
+      margin-top: 8px;
+    }
+    .status-active { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+    .status-pending { background: rgba(248, 113, 113, 0.2); color: #f87171; }
+    .status-updating { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+    .progress-bar {
+      width: 100%;
+      height: 6px;
+      background: rgba(0,0,0,0.3);
+      border-radius: 3px;
+      margin: 8px 0;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #10b981, #06b6d4);
+      width: 65%;
+      animation: progress 2s ease-in-out infinite;
+    }
+    @keyframes progress {
+      0%, 100% { width: 65%; }
+      50% { width: 75%; }
+    }
+    .action-btn {
+      padding: 6px 12px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 4px;
+      color: #10b981;
+      cursor: pointer;
+      font-size: 12px;
+      font-weight: 600;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+    .action-btn:hover { background: rgba(16, 185, 129, 0.2); }
+    .deployment-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+      margin-top: 20px;
+    }
+    .table-container {
+      overflow-x: auto;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    th {
+      background: rgba(16, 185, 129, 0.05);
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+      color: #e4e4e7;
+    }
+    td {
+      padding: 12px;
+      border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+    }
+    tr:hover { background: rgba(16, 185, 129, 0.03); }
+  </style>
+</head>
+<body>
+<div class="layout">
+
+  <nav class="sidebar">
+    <div class="sidebar-brand">
+      <a href="index.html" class="brand-icon" style="text-decoration:none;font-size:15px;">🛡️</a>
+      <div class="brand-text">
+        <span class="brand-title">DBI SOC</span>
+        <span class="brand-sub">COMMAND CENTER</span>
+      </div>
+    </div>
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">DUEA Management</div>
+      <ul class="sidebar-nav">
+        <li class="nav-item"><a href="31_duea_tools.html"><span class="nav-icon">🚀</span><span>Tools</span></a></li>
+        <li class="nav-item"><a href="32_duea_deployment.html" class="active"><span class="nav-icon">📦</span><span>Deployments</span></a></li>
+        <li class="nav-item"><a href="33_duea_security.html"><span class="nav-icon">🔒</span><span>Security</span></a></li>
+      </ul>
+    </div>
+    <div class="sidebar-footer">DBI SOC · DUEA</div>
+  </nav>
+
+  <main class="main">
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <h1>DUEA Active Deployments</h1>
+      </div>
+      <div class="toolbar-right">
+        <button class="toolbar-btn" onclick="createDeployment()">+ New Deployment</button>
+      </div>
+    </div>
+
+    <div class="content">
+      <!-- Deployment Overview -->
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 30px;">
+        <div class="section-card" style="background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.2);">
+          <div style="font-size: 24px; margin-bottom: 8px;">✓</div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">ACTIVE AGENTS</div>
+          <div style="font-size: 28px; font-weight: 700; color: #22c55e;">42</div>
+        </div>
+        <div class="section-card" style="background: rgba(59, 130, 246, 0.05); border-color: rgba(59, 130, 246, 0.2);">
+          <div style="font-size: 24px; margin-bottom: 8px;">⏳</div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">PENDING</div>
+          <div style="font-size: 28px; font-weight: 700; color: #3b82f6;">8</div>
+        </div>
+        <div class="section-card" style="background: rgba(248, 113, 113, 0.05); border-color: rgba(248, 113, 113, 0.2);">
+          <div style="font-size: 24px; margin-bottom: 8px;">⚠️</div>
+          <div style="font-size: 12px; color: #999; margin-bottom: 4px;">UNHEALTHY</div>
+          <div style="font-size: 28px; font-weight: 700; color: #f87171;">2</div>
+        </div>
+      </div>
+
+      <!-- Active Deployments -->
+      <div class="section-card">
+        <h2 style="margin-bottom: 20px;">🟢 Active Deployments</h2>
+
+        <div class="deployment-item">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+              <strong>Production Windows - Enterprise</strong>
+              <div style="font-size: 12px; color: #999; margin-top: 4px;">42 endpoints • FIM, Osquery, Falco, YARA, EDR Lite</div>
+            </div>
+            <div class="deployment-status status-active">✓ ACTIVE</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
+          <div style="font-size: 12px; color: #999;">Deployed 2 days ago • v0.1.0-alpha</div>
+          <button class="action-btn">📊 View Status</button>
+          <button class="action-btn">🔧 Configure</button>
+          <button class="action-btn">📋 Logs</button>
+        </div>
+
+        <div class="deployment-item">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+              <strong>Staging Linux - Core</strong>
+              <div style="font-size: 12px; color: #999; margin-top: 4px;">8 endpoints • FIM, Osquery, Falco, auditd</div>
+            </div>
+            <div class="deployment-status status-active">✓ ACTIVE</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
+          <div style="font-size: 12px; color: #999;">Deployed 5 days ago • v0.1.0-alpha</div>
+          <button class="action-btn">📊 View Status</button>
+          <button class="action-btn">🔧 Configure</button>
+          <button class="action-btn">📋 Logs</button>
+        </div>
+
+        <div class="deployment-item">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+              <strong>Lab Docker - Full Stack</strong>
+              <div style="font-size: 12px; color: #999; margin-top: 4px;">1 container • All free tools</div>
+            </div>
+            <div class="deployment-status status-active">✓ ACTIVE</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 100%;"></div></div>
+          <div style="font-size: 12px; color: #999;">Deployed 1 week ago • v0.1.0-alpha</div>
+          <button class="action-btn">📊 View Status</button>
+          <button class="action-btn">🔧 Configure</button>
+          <button class="action-btn">📋 Logs</button>
+        </div>
+      </div>
+
+      <!-- Pending Deployments -->
+      <div class="section-card" style="margin-top: 20px;">
+        <h2 style="margin-bottom: 20px;">⏳ Pending Deployments</h2>
+
+        <div class="deployment-item" style="border-left-color: #3b82f6;">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+              <strong>macOS Team Devices</strong>
+              <div style="font-size: 12px; color: #999; margin-top: 4px;">5 endpoints • FIM, Osquery, Falco, YARA</div>
+            </div>
+            <div class="deployment-status status-pending">⏳ PENDING</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width: 45%;"></div></div>
+          <div style="font-size: 12px; color: #999;">Build in progress... ETA 30 min</div>
+          <button class="action-btn">⏸ Pause</button>
+          <button class="action-btn">❌ Cancel</button>
+        </div>
+
+        <div class="deployment-item" style="border-left-color: #3b82f6;">
+          <div style="display:flex; justify-content:space-between; align-items:start;">
+            <div>
+              <strong>Premium Wazuh Integration</strong>
+              <div style="font-size: 12px; color: #999; margin-top: 4px;">License approval pending</div>
+            </div>
+            <div class="deployment-status status-pending">⏳ AWAITING LICENSE</div>
+          </div>
+          <div style="font-size: 12px; color: #999; margin-top: 12px;">Configured • Waiting for license key</div>
+          <button class="action-btn">🔑 Enter License</button>
+          <button class="action-btn">❌ Cancel</button>
+        </div>
+      </div>
+
+      <!-- Deployment History Table -->
+      <div class="section-card" style="margin-top: 20px;">
+        <h2 style="margin-bottom: 20px;">📋 Recent Deployment History</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Deployment Name</th>
+                <th>Platform</th>
+                <th>Endpoints</th>
+                <th>Status</th>
+                <th>Deployed</th>
+                <th>Version</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Prod Windows Enterprise</strong></td>
+                <td>Windows</td>
+                <td>42</td>
+                <td><span class="deployment-status status-active">Active</span></td>
+                <td>2 days ago</td>
+                <td>0.1.0-alpha</td>
+                <td><button class="action-btn">Manage</button></td>
+              </tr>
+              <tr>
+                <td><strong>Staging Linux Core</strong></td>
+                <td>Linux</td>
+                <td>8</td>
+                <td><span class="deployment-status status-active">Active</span></td>
+                <td>5 days ago</td>
+                <td>0.1.0-alpha</td>
+                <td><button class="action-btn">Manage</button></td>
+              </tr>
+              <tr>
+                <td><strong>Lab Docker Full</strong></td>
+                <td>Docker</td>
+                <td>1</td>
+                <td><span class="deployment-status status-active">Active</span></td>
+                <td>1 week ago</td>
+                <td>0.1.0-alpha</td>
+                <td><button class="action-btn">Manage</button></td>
+              </tr>
+              <tr>
+                <td><strong>macOS Team Devices</strong></td>
+                <td>macOS</td>
+                <td>5</td>
+                <td><span class="deployment-status status-pending">Building</span></td>
+                <td>In progress</td>
+                <td>0.1.0-alpha</td>
+                <td><button class="action-btn">Monitor</button></td>
+              </tr>
+              <tr>
+                <td><strong>Wazuh Premium</strong></td>
+                <td>Multi</td>
+                <td>-</td>
+                <td><span class="deployment-status status-pending">Pending</span></td>
+                <td>Waiting</td>
+                <td>0.1.0-alpha</td>
+                <td><button class="action-btn">Configure</button></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script>
+  function createDeployment() {
+    alert('🚀 Opening DUEA Installer Factory...');
+  }
+</script>
+
+</body>
+</html>
