@@ -1,0 +1,23 @@
+[package]
+name = "duea-core"
+version = { workspace = true }
+edition = { workspace = true }
+license = "AGPL-3.0"
+repository = "https://github.com/debasish-lenka/Enterprise-Detection-Response-Agent-SOC"
+description = "Core agent logic and configuration for DUEA"
+
+[dependencies]
+anyhow = { workspace = true }
+thiserror = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+toml = { workspace = true }
+chrono = { workspace = true }
+log = { workspace = true }
+async-trait = { workspace = true }
+tokio = { version = "1.35", features = ["full"] }
+rustls = { workspace = true }
+bytes = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -1,0 +1,23 @@
+[package]
+name = "duea-agent"
+version = { workspace = true }
+edition = { workspace = true }
+license = "AGPL-3.0"
+repository = "https://github.com/debasish-lenka/Enterprise-Detection-Response-Agent-SOC"
+description = "DUEA unified endpoint security agent binary"
+
+[[bin]]
+name = "duea"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+tokio = { version = "1.35", features = ["full", "signal"] }
+clap = { workspace = true }
+log = { workspace = true }
+serde_json = { workspace = true }
+env_logger = { workspace = true }
+tracing-subscriber = { workspace = true }
+duea-core = { path = "../duea-core" }
+duea-fim = { path = "../duea-fim" }
+duea-transport = { path = "../duea-transport" }

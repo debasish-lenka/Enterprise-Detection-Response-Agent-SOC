@@ -1,0 +1,56 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/duea-core",
+    "crates/duea-fim",
+    "crates/duea-transport",
+    "crates/duea-agent",
+]
+
+[workspace.package]
+version = "0.1.0-alpha"
+edition = "2021"
+authors = ["SOC Manager <security@example.com>"]
+license = "AGPL-3.0"
+repository = "https://github.com/jeeva-debasish/Enterprise-Detection-SOC"
+
+[workspace.dependencies]
+anyhow = "1.0"
+thiserror = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+tokio-rustls = "0.26"
+rustls = "0.23"
+rustls-pemfile = "2.0"
+rustls-native-certs = "0.7"
+webpki-roots = "0.26"
+sha2 = "0.10"
+regex = "1.10"
+log = "0.4"
+env_logger = "0.11"
+chrono = { version = "0.4", features = ["serde"] }
+walkdir = "2.4"
+notify = "6.1"
+rcgen = "0.12"
+bytes = "1.5"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+async-trait = "0.1"
+blake3 = "1.5"
+uuid = { version = "1.7", features = ["v4", "serde"] }
+tempfile = "3.8"
+mockall = "0.12"
+proptest = "1.0"
+clap = { version = "4.5", features = ["derive"] }
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"
+
+[profile.dev]
+opt-level = 0
+debug = true
