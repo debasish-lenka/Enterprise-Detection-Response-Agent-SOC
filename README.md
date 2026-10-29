@@ -1,4 +1,4 @@
-# DBI SOC Lab
+# Enterprise Detection & Response Agent — SOC Lab
 
 [![MITRE ATT&CK](https://img.shields.io/badge/MITRE-ATT%26CK-red)](https://attack.mitre.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
@@ -167,8 +167,8 @@ Internet / Lab Network
 ### Step 1 — Clone the Repository
 
 ```bash
-git clone https://github.com/deba751002/DBI-SOC-LAB.git
-cd DBI-SOC-LAB
+git clone https://github.com/debasish-lenka/Enterprise-Detection-Response-Agent-SOC.git
+cd Enterprise-Detection-Response-Agent-SOC
 ```
 
 ### Step 2 — Make Scripts Executable
@@ -633,7 +633,7 @@ Built as a hands-on SOC training environment for blue team skill development, th
 
 ---
 
-*DBI SOC · 28+ tools · 100% open-source · MITRE ATT&CK v14*
+*Enterprise Detection & Response Agent · 28+ tools · 100% open-source · MITRE ATT&CK v14*
 
 ---
 ⭐ **Star this repo if it helped you — it helps other SOC analysts find it!**

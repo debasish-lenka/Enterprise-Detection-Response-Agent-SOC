@@ -27,6 +27,11 @@ param(
     [int]$VectorPort = 6005,
     [string[]]$WatchedExtensions,
     [string]$InstallDir = "C:\ProgramData\SOCLab\FIM",
+    # Account the watcher runs as, which therefore needs Modify on InstallDir.
+    # Defaults to whoever runs this script; when pushed by an RMM (so this runs
+    # as SYSTEM) it falls back to BUILTIN\Users, since the watcher runs as
+    # whichever user logs on later. Set explicitly on a shared machine.
+    [string]$WatcherAccount,
     [switch]$Uninstall
 )
 
@@ -53,6 +58,59 @@ Write-Host "+======================================================+`n" -Foregro
 Write-Host "[1/4] Installing watcher to $InstallDir..." -ForegroundColor Yellow
 New-Item -ItemType Directory -Force -Path $InstallDir | Out-Null
 Copy-Item "$PSScriptRoot\Watch-FileIntegrity.ps1" "$InstallDir\Watch-FileIntegrity.ps1" -Force
+
+# -- Step 1b: Lock down the install directory -----------------------------------
+# ShadowCopies\ holds complete byte-for-byte copies of every watched file, and
+# fim-events.log holds content previews of them. Inheriting C:\ProgramData's
+# default ACL would hand every local user read access to both - turning a
+# monitoring tool into a way for any standard user to read every other user's
+# documents. Strip inheritance and grant only SYSTEM, Administrators, and the
+# account the watcher actually runs under.
+#
+# Well-known SIDs rather than names, so this doesn't break on a non-English
+# Windows where the groups are called something else.
+Write-Host "   Hardening ACLs on $InstallDir..." -ForegroundColor Yellow
+
+$runningAsSystem = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value -eq 'S-1-5-18'
+if (-not $WatcherAccount) {
+    if ($runningAsSystem) {
+        # Pushed by an RMM (ManageEngine/Intune/GPO) - there's no interactive
+        # user to read here, and the watcher runs as whoever logs on later, so
+        # the local Users group is the only thing that covers them. Scope this
+        # to named accounts with -WatcherAccount on a shared machine.
+        $WatcherAccount = 'S-1-5-32-545'   # BUILTIN\Users
+        Write-Warning "   Running as SYSTEM: granting BUILTIN\Users access to $InstallDir."
+        Write-Warning "   On a multi-user machine, re-run with -WatcherAccount '<DOMAIN\user>' to scope this tighter."
+    } else {
+        $WatcherAccount = ([System.Security.Principal.WindowsIdentity]::GetCurrent()).User.Value
+    }
+}
+
+try {
+    $acl = Get-Acl $InstallDir
+    $acl.SetAccessRuleProtection($true, $false)          # break inheritance, drop inherited ACEs
+    @($acl.Access) | ForEach-Object { [void]$acl.RemoveAccessRule($_) }
+
+    $inherit = [System.Security.AccessControl.InheritanceFlags]'ContainerInherit,ObjectInherit'
+    $prop    = [System.Security.AccessControl.PropagationFlags]::None
+    $allow   = [System.Security.AccessControl.AccessControlType]::Allow
+
+    $grants = @(
+        @{ Sid = 'S-1-5-18';     Rights = 'FullControl' }   # NT AUTHORITY\SYSTEM (Wazuh agent reads the log as this)
+        @{ Sid = 'S-1-5-32-544'; Rights = 'FullControl' }   # BUILTIN\Administrators
+        @{ Sid = $WatcherAccount; Rights = 'Modify'     }   # the watcher process itself
+    )
+    foreach ($g in $grants) {
+        $id = try { [System.Security.Principal.SecurityIdentifier]::new($g.Sid) } catch { $g.Sid }
+        $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule(
+            $id, [System.Security.AccessControl.FileSystemRights]$g.Rights, $inherit, $prop, $allow)))
+    }
+    Set-Acl -Path $InstallDir -AclObject $acl
+    Write-Host "   ACLs: SYSTEM + Administrators + watcher account only (inheritance broken)" -ForegroundColor Green
+} catch {
+    Write-Warning "   ACL hardening FAILED: $($_.Exception.Message)"
+    Write-Warning "   Shadow copies may be readable by other local users - fix before treating this as production."
+}
 
 $configPath = "$InstallDir\fim-config.json"
 $config = if (Test-Path $configPath) {

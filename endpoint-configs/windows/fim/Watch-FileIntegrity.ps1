@@ -151,11 +151,51 @@ function global:Test-FimWatchedExtension {
     return $global:FimConfig.watched_extensions -contains $ext
 }
 
+# Strips obvious secrets out of a content preview before it leaves the machine.
+# Previews are shipped into the SIEM and stored in its alerts index, where
+# anyone with dashboard access can read them - so a .env or passwords.txt on
+# someone's Desktop would otherwise put live credentials in front of every
+# analyst, permanently. Best-effort by nature: this catches the common,
+# well-shaped secrets, not every possible one. Treat it as reducing exposure,
+# not as a guarantee the preview is clean.
+function global:Protect-FimSecrets {
+    param([string]$Text)
+    if (-not $Text) { return $Text }
+    if ($global:FimConfig.content_preview -and
+        $global:FimConfig.content_preview.PSObject.Properties.Name -contains 'redact_secrets' -and
+        -not $global:FimConfig.content_preview.redact_secrets) { return $Text }
+
+    $patterns = @(
+        # key=value style assignments (ini/env/yaml/json/connection strings)
+        '(?i)(password|passwd|pwd|secret|api[_-]?key|apikey|access[_-]?key|auth[_-]?token|token)\s*[:=]\s*["'']?[^\s"'',;}]{4,}'
+        # Cloud / service provider key formats
+        'AKIA[0-9A-Z]{16}'                                   # AWS access key id
+        'gh[pousr]_[A-Za-z0-9]{20,}'                         # GitHub tokens
+        'xox[baprs]-[0-9A-Za-z-]{10,}'                       # Slack tokens
+        # Structured credentials
+        'eyJ[A-Za-z0-9_-]{8,}\.eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}'  # JWT
+        '(?i)bearer\s+[A-Za-z0-9._\-]{16,}'                  # bearer tokens
+        '-----BEGIN[A-Z ]*PRIVATE KEY-----'                  # private key blocks
+        # Long digit runs that look like a card / account number
+        '\b(?:\d[ -]?){13,19}\b'
+    )
+    foreach ($p in $patterns) {
+        try { $Text = [regex]::Replace($Text, $p, '[REDACTED]') } catch {}
+    }
+    return $Text
+}
+
 # Extracts a bounded, human-readable preview so an analyst can see what is
 # inside a file without downloading it. Office formats are zip containers -
 # their XML text parts are pulled and tag-stripped. PDF/zip get a best-effort
-# fallback, not full text (see README limitations).
+# fallback, not full text (see README limitations). Whatever comes out is run
+# through Protect-FimSecrets before any caller sees it.
 function global:Get-FimContentPreview {
+    param([string]$SourcePath, [string]$Ext)
+    return (Protect-FimSecrets -Text (Get-FimContentPreviewRaw -SourcePath $SourcePath -Ext $Ext))
+}
+
+function global:Get-FimContentPreviewRaw {
     param([string]$SourcePath, [string]$Ext)
     if (-not ($global:FimConfig.content_preview -and $global:FimConfig.content_preview.enabled)) { return $null }
     $maxChars = if ($global:FimConfig.content_preview.max_chars) { [int]$global:FimConfig.content_preview.max_chars } else { 4000 }
@@ -290,6 +330,10 @@ function global:Send-FimEvent {
 
     $evt = [ordered]@{
         "@timestamp"      = (Get-Date).ToUniversalTime().ToString("o")
+        # Marker so the Wazuh manager's local_rules.xml can target exactly
+        # these events - matching on <decoded_as>json</decoded_as> alone would
+        # also catch every other JSON log source on the agent.
+        event_source      = "soclab_fim"
         action            = $correlatedAct
         user              = $global:FimIdentity
         machine           = $global:FimMachine
@@ -299,18 +343,29 @@ function global:Send-FimEvent {
         file_size         = $sizeBytes
         content_preview   = $preview
         recoverable       = $recoverable
-        content_b64       = $contentB64
     }
-    $json = $evt | ConvertTo-Json -Compress -Depth 4
 
-    try { Add-Content -Path $global:FimConfig.log_path -Value $json } catch {}
+    # Two variants of the same event:
+    #  - LEAN (no content_b64) goes to the local log file, which the Wazuh
+    #    agent tails via <localfile>. Wazuh's logcollector truncates any event
+    #    over ~64KB, and a recovered file's base64 runs to tens of MB - it
+    #    would blow that limit and bloat the alerts index for no benefit. The
+    #    bytes stay on the endpoint in the shadow store, addressable by the
+    #    file_hash that every alert carries.
+    #  - FULL (with content_b64) goes over the TCP forward to Vector, which
+    #    has no such limit and is what backs the dashboard's restore button.
+    $jsonLean = $evt | ConvertTo-Json -Compress -Depth 4
+    $evt["content_b64"] = $contentB64
+    $jsonFull = $evt | ConvertTo-Json -Compress -Depth 4
+
+    try { Add-Content -Path $global:FimConfig.log_path -Value $jsonLean } catch {}
 
     if ($global:FimConfig.forward_to_vector.enabled) {
         try {
             $client = New-Object System.Net.Sockets.TcpClient
             $client.Connect($global:FimConfig.forward_to_vector.host, [int]$global:FimConfig.forward_to_vector.port)
             $stream = $client.GetStream()
-            $bytes  = [System.Text.Encoding]::UTF8.GetBytes("$json`n")
+            $bytes  = [System.Text.Encoding]::UTF8.GetBytes("$jsonFull`n")
             $stream.Write($bytes, 0, $bytes.Length)
             $stream.Close()
             $client.Close()
@@ -502,6 +557,21 @@ try {
             }
             $lastReload = Get-Date
         }
+
+        # Roll the event log before it can fill the disk. The Wazuh agent
+        # tails this file, and its logcollector follows the rotation (it
+        # re-opens on inode/size change), so events aren't lost across a roll.
+        # One generation is kept - anything older has already been shipped to
+        # the manager and lives in the alerts index.
+        try {
+            $maxLogMb = if ($global:FimConfig.max_log_mb) { [int]$global:FimConfig.max_log_mb } else { 50 }
+            $logFile = Get-Item -LiteralPath $global:FimConfig.log_path -ErrorAction SilentlyContinue
+            if ($logFile -and $logFile.Length -gt ($maxLogMb * 1MB)) {
+                $rolled = "$($global:FimConfig.log_path).1"
+                Move-Item -LiteralPath $logFile.FullName -Destination $rolled -Force -ErrorAction Stop
+                Write-FimDiag "Rotated event log at $([math]::Round($logFile.Length/1MB,1)) MB -> $rolled"
+            }
+        } catch { Write-FimDiag "Log rotation failed: $($_.Exception.Message)" }
 
         $reconcileEvery = 120
         if ($global:FimConfig.reconciliation_scan_seconds) { $reconcileEvery = [int]$global:FimConfig.reconciliation_scan_seconds }

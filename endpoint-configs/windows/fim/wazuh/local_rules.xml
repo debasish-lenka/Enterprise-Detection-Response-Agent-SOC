@@ -1,0 +1,133 @@
+<!--
+  SOC Lab File Integrity / DLP — Wazuh manager rules
+  ==================================================
+  Install on the Wazuh MANAGER (not the agent):
+      /var/ossec/etc/rules/local_rules.xml
+  then: sudo systemctl restart wazuh-manager
+
+  These parse the JSON events written by Watch-FileIntegrity.ps1 and picked up
+  by the agent's <localfile> block (see agent-localfile.xml next to this file).
+
+  Because the agent ships them with <log_format>json</log_format>, Wazuh's
+  built-in JSON decoder already flattens every key - no custom decoder needed.
+  In the alerts index the fields land under data.*  (data.action, data.user,
+  data.file_path, ...), which is what you filter on in Wazuh Dashboard.
+
+  Rule IDs 100300-100399 are reserved here. Wazuh requires custom rules to be
+  >= 100000; check these don't collide with anything already on your manager
+  (/var/ossec/bin/wazuh-logtest is the quick way to confirm they fire).
+-->
+<!--
+  GROUP NAMES — this controls WHERE these alerts surface in the Wazuh UI.
+
+  "syscheck" is deliberately included. Wazuh's own File Integrity Monitoring
+  module (the existing tile under Endpoint Security) filters alerts on
+  rule.groups: syscheck, so including it makes these events show up inside that
+  native module alongside Wazuh's own FIM events - no plugin changes, nothing
+  that breaks on a Wazuh upgrade.
+
+  "dlp" is what the custom dashboard and the rule.level escalations below key
+  off, so keep it regardless.
+
+  Two honest caveats about the syscheck group:
+   - Only the module's EVENTS tab will show these. Its INVENTORY tab reads the
+     agent's syscheck state database over the Wazuh API, not the alerts index,
+     so our events cannot appear there at all.
+   - Panels built around syscheck-specific fields (syscheck.path,
+     syscheck.event, syscheck.md5_after, ...) will be blank for our events,
+     because ours carry data.file_path / data.action instead. The alert list
+     and the event histogram work fine; the syscheck-shaped widgets won't.
+
+  To keep these out of the native module and use only the custom dashboard,
+  drop "syscheck," from the group list below and restart the manager.
+-->
+<group name="soclab,dlp,file_integrity,syscheck,">
+
+  <!--
+    Base rule. Every child below inherits from this via <if_sid>, so the
+    event_source guard only has to be written once. Matching on
+    <decoded_as>json</decoded_as> alone would also swallow every other JSON
+    log source on the agent, which is why Watch-FileIntegrity.ps1 stamps a
+    dedicated event_source field.
+  -->
+  <rule id="100300" level="3">
+    <decoded_as>json</decoded_as>
+    <field name="event_source">^soclab_fim$</field>
+    <description>SOC Lab DLP: file activity on $(machine)</description>
+    <options>no_full_log</options>
+  </rule>
+
+  <!-- ── Routine activity: low level, kept for audit trail / correlation ── -->
+
+  <rule id="100301" level="4">
+    <if_sid>100300</if_sid>
+    <field name="action">^created$</field>
+    <description>SOC Lab DLP: file created - $(file_path) by $(user)</description>
+  </rule>
+
+  <rule id="100302" level="4">
+    <if_sid>100300</if_sid>
+    <field name="action">^modified$</field>
+    <description>SOC Lab DLP: file modified - $(file_path) by $(user)</description>
+  </rule>
+
+  <rule id="100303" level="6">
+    <if_sid>100300</if_sid>
+    <field name="action">^renamed$</field>
+    <description>SOC Lab DLP: file renamed - $(file_path) by $(user)</description>
+  </rule>
+
+  <!-- ── Data movement: the actual DLP signal ─────────────────────────── -->
+
+  <rule id="100304" level="8">
+    <if_sid>100300</if_sid>
+    <field name="action">^moved$</field>
+    <description>SOC Lab DLP: file MOVED - $(destination) to $(file_path) by $(user)</description>
+  </rule>
+
+  <rule id="100305" level="8">
+    <if_sid>100300</if_sid>
+    <field name="action">^copied$</field>
+    <description>SOC Lab DLP: file COPIED - $(destination) to $(file_path) by $(user)</description>
+  </rule>
+
+  <rule id="100306" level="10">
+    <if_sid>100300</if_sid>
+    <field name="action">^deleted$</field>
+    <description>SOC Lab DLP: file DELETED - $(file_path) by $(user)</description>
+  </rule>
+
+  <!--
+    Escalations: same events, but the destination is off the system drive.
+    A copy/move onto D:-Z: (USB sticks, mounted volumes, mapped drives) or to a
+    \\UNC\share is the classic exfiltration shape, so it outranks the same
+    action staying on C:. These sit ABOVE the rules they escalate, so put them
+    last - Wazuh evaluates in file order and the more specific match wins.
+  -->
+  <rule id="100310" level="12">
+    <if_sid>100304,100305</if_sid>
+    <field name="file_path">^[D-Zd-z]:\\</field>
+    <description>SOC Lab DLP: file copied/moved to REMOVABLE or SECONDARY drive - $(file_path) by $(user)</description>
+    <group>exfiltration,</group>
+  </rule>
+
+  <rule id="100311" level="12">
+    <if_sid>100304,100305</if_sid>
+    <field name="file_path">^\\\\</field>
+    <description>SOC Lab DLP: file copied/moved to NETWORK SHARE - $(file_path) by $(user)</description>
+    <group>exfiltration,</group>
+  </rule>
+
+  <!--
+    Deletion of something that is NOT recoverable (no shadow copy was held -
+    file was over shadow_copy.max_file_mb, or the watcher never saw it before
+    it went). Worth ranking above a normal delete: it's the one case where the
+    content is genuinely gone.
+  -->
+  <rule id="100312" level="12">
+    <if_sid>100306</if_sid>
+    <field name="recoverable">^false$</field>
+    <description>SOC Lab DLP: UNRECOVERABLE file deletion - $(file_path) by $(user)</description>
+  </rule>
+
+</group>

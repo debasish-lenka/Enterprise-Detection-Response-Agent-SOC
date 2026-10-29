@@ -1,0 +1,27 @@
+<!--
+  SOC Lab File Integrity / DLP — Wazuh AGENT config snippet
+  =========================================================
+  Paste this <localfile> block inside the <ossec_config> element of the
+  agent's own config on each endpoint:
+
+      C:\Program Files (x86)\ossec-agent\ossec.conf
+
+  then, in an elevated PowerShell:
+
+      Restart-Service WazuhSvc
+
+  That is the entire endpoint-side integration. No new port is opened and no
+  second agent is installed - the events ride the Wazuh agent's existing
+  outbound, already-encrypted channel to the manager on TCP 1514, the same one
+  it uses for every other log it collects.
+
+  log_format json makes Wazuh's built-in JSON decoder flatten each line, so
+  every field Watch-FileIntegrity.ps1 emits (action, user, machine, file_path,
+  destination, file_hash, file_size, content_preview, recoverable) becomes a
+  queryable data.* field in the alerts index - no custom decoder required.
+-->
+
+  <localfile>
+    <log_format>json</log_format>
+    <location>C:\ProgramData\SOCLab\FIM\fim-events.log</location>
+  </localfile>

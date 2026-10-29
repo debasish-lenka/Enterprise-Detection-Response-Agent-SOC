@@ -22,8 +22,10 @@
   },
   "content_preview": {
     "enabled": true,
-    "max_chars": 4000
+    "max_chars": 4000,
+    "redact_secrets": true
   },
   "move_correlation_window_seconds": 30,
-  "reconciliation_scan_seconds": 120
+  "reconciliation_scan_seconds": 120,
+  "max_log_mb": 50
 }
