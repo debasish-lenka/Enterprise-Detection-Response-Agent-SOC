@@ -3,6 +3,7 @@ use clap::Parser;
 use duea_core::{Config, ModuleConfig, ModuleRegistry};
 use duea_fim::FimModule;
 use duea_osquery::OsqueryModule;
+use duea_yara::YaraModule;
 use duea_transport::MtlsClient;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -69,6 +70,20 @@ async fn main() -> Result<()> {
     let osquery_module = OsqueryModule::new(osquery_config);
     registry.register(Box::new(osquery_module));
 
+    // Register YARA module
+    let yara_config = duea_yara::YaraConfig {
+        rules_paths: config.modules.yara.rules_paths.iter().map(PathBuf::from).collect(),
+        scan_paths: config.modules.yara.scan_paths.iter().map(PathBuf::from).collect(),
+        scan_interval_secs: config.modules.yara.scan_interval_secs,
+        max_file_size: config.modules.yara.max_file_size,
+        exclude_patterns: config.modules.yara.exclude_patterns.clone(),
+        compile_timeout_secs: config.modules.yara.compile_timeout_secs,
+        match_timeout_secs: config.modules.yara.match_timeout_secs,
+        ..Default::default()
+    };
+    let yara_module = YaraModule::new(yara_config);
+    registry.register(Box::new(yara_module));
+
     // Initialize all modules
     let mut module_configs = HashMap::new();
     module_configs.insert("fim".to_string(), ModuleConfig {
@@ -87,6 +102,15 @@ async fn main() -> Result<()> {
             let mut opts = HashMap::new();
             opts.insert("socket_path".to_string(), serde_json::json!(config.modules.osquery.socket_path.clone().unwrap_or_else(|| "/var/osquery/osquery.em".to_string())));
             opts.insert("query_interval_secs".to_string(), serde_json::json!(config.modules.osquery.query_interval_secs));
+            opts
+        },
+    });
+    module_configs.insert("yara".to_string(), ModuleConfig {
+        enabled: config.modules.yara.enabled,
+        options: {
+            let mut opts = HashMap::new();
+            opts.insert("rules_paths".to_string(), serde_json::json!(config.modules.yara.rules_paths));
+            opts.insert("scan_interval_secs".to_string(), serde_json::json!(config.modules.yara.scan_interval_secs));
             opts
         },
     });

@@ -38,6 +38,8 @@ pub struct ModulesSection {
     pub fim: FimModule,
     #[serde(default)]
     pub osquery: OsqueryModule,
+    #[serde(default)]
+    pub yara: YaraModule,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -83,12 +85,61 @@ impl Default for OsqueryModule {
     }
 }
 
+#[derive(Debug, Clone, Deserialize)]
+pub struct YaraModule {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_scan_interval")]
+    pub scan_interval_secs: u64,
+    #[serde(default)]
+    pub rules_paths: Vec<String>,
+    #[serde(default)]
+    pub scan_paths: Vec<String>,
+    #[serde(default)]
+    pub max_file_size: Option<u64>,
+    #[serde(default)]
+    pub exclude_patterns: Vec<String>,
+    #[serde(default = "default_compile_timeout")]
+    pub compile_timeout_secs: u64,
+    #[serde(default = "default_match_timeout")]
+    pub match_timeout_secs: u64,
+}
+
+impl Default for YaraModule {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            scan_interval_secs: 3600,
+            rules_paths: vec!["/opt/duea/yara/rules".to_string()],
+            scan_paths: vec!["/".to_string(), "/home".to_string()],
+            max_file_size: Some(100 * 1024 * 1024),
+            exclude_patterns: vec![
+                "*.tmp".to_string(),
+                "*.log".to_string(),
+                "/proc/*".to_string(),
+                "/sys/*".to_string(),
+                "/dev/*".to_string(),
+            ],
+            compile_timeout_secs: 60,
+            match_timeout_secs: 30,
+        }
+    }
+}
+
 fn default_query_interval() -> u64 {
     3600
 }
 
 fn default_scan_interval() -> u64 {
     3600
+}
+
+fn default_compile_timeout() -> u64 {
+    60
+}
+
+fn default_match_timeout() -> u64 {
+    30
 }
 
 impl Config {
