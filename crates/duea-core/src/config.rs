@@ -36,6 +36,8 @@ pub struct TransportSection {
 pub struct ModulesSection {
     #[serde(default)]
     pub fim: FimModule,
+    #[serde(default)]
+    pub osquery: OsqueryModule,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -59,6 +61,30 @@ impl Default for FimModule {
             exclude_patterns: Vec::new(),
         }
     }
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct OsqueryModule {
+    #[serde(default)]
+    pub enabled: bool,
+    #[serde(default = "default_query_interval")]
+    pub query_interval_secs: u64,
+    #[serde(default)]
+    pub socket_path: Option<String>,
+}
+
+impl Default for OsqueryModule {
+    fn default() -> Self {
+        Self {
+            enabled: false,
+            query_interval_secs: 3600,
+            socket_path: None,
+        }
+    }
+}
+
+fn default_query_interval() -> u64 {
+    3600
 }
 
 fn default_scan_interval() -> u64 {

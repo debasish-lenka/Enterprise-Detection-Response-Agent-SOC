@@ -21,3 +21,4 @@ tracing-subscriber = { workspace = true }
 duea-core = { path = "../duea-core" }
 duea-fim = { path = "../duea-fim" }
 duea-transport = { path = "../duea-transport" }
+duea-osquery = { path = "../duea-osquery" }

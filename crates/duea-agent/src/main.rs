@@ -2,6 +2,7 @@ use anyhow::{Context, Result};
 use clap::Parser;
 use duea_core::{Config, ModuleConfig, ModuleRegistry};
 use duea_fim::FimModule;
+use duea_osquery::OsqueryModule;
 use duea_transport::MtlsClient;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -57,6 +58,17 @@ async fn main() -> Result<()> {
     let fim_module = FimModule::new(fim_config);
     registry.register(Box::new(fim_module));
 
+    // Register Osquery module
+    let osquery_config = duea_osquery::OsqueryConfig {
+        socket_path: config.modules.osquery.socket_path.clone()
+            .map(PathBuf::from)
+            .unwrap_or_else(|| PathBuf::from("/var/osquery/osquery.em")),
+        query_interval_secs: config.modules.osquery.query_interval_secs,
+        ..Default::default()
+    };
+    let osquery_module = OsqueryModule::new(osquery_config);
+    registry.register(Box::new(osquery_module));
+
     // Initialize all modules
     let mut module_configs = HashMap::new();
     module_configs.insert("fim".to_string(), ModuleConfig {
@@ -66,6 +78,15 @@ async fn main() -> Result<()> {
             opts.insert("paths".to_string(), serde_json::json!(config.modules.fim.paths));
             opts.insert("exclude_patterns".to_string(), serde_json::json!(config.modules.fim.exclude_patterns));
             opts.insert("scan_interval_secs".to_string(), serde_json::json!(config.modules.fim.scan_interval_secs));
+            opts
+        },
+    });
+    module_configs.insert("osquery".to_string(), ModuleConfig {
+        enabled: config.modules.osquery.enabled,
+        options: {
+            let mut opts = HashMap::new();
+            opts.insert("socket_path".to_string(), serde_json::json!(config.modules.osquery.socket_path.clone().unwrap_or_else(|| "/var/osquery/osquery.em".to_string())));
+            opts.insert("query_interval_secs".to_string(), serde_json::json!(config.modules.osquery.query_interval_secs));
             opts
         },
     });

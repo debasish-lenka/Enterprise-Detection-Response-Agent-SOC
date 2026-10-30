@@ -5,6 +5,7 @@ members = [
     "crates/duea-fim",
     "crates/duea-transport",
     "crates/duea-agent",
+    "crates/duea-osquery",
 ]
 
 [workspace.package]

@@ -447,6 +447,7 @@ dependencies = [
  "clap",
  "duea-core",
  "duea-fim",
+ "duea-osquery",
  "duea-transport",
  "env_logger",
  "log",
@@ -495,6 +496,22 @@ dependencies = [
  "tracing",
  "uuid",
  "walkdir",
+]
+
+[[package]]
+name = "duea-osquery"
+version = "0.1.0-alpha"
+dependencies = [
+ "anyhow",
+ "async-trait",
+ "chrono",
+ "duea-core",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 1.0.69",
+ "tokio",
+ "tracing",
 ]
 
 [[package]]
